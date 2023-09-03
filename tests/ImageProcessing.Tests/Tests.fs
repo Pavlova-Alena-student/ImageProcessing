@@ -5,7 +5,4 @@ open ImageProcessing
 
 module SayTests =
     [<Tests>]
-    let tests =
-        testList "samples" [
-
-        ]
+    let tests = testList "samples" []

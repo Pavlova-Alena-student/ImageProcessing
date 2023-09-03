@@ -259,9 +259,17 @@ dist/
 # Ionide cache
 .ionide/
 
+# EditorConfig
+.editorconfig
+
 # Test coverage files
 coverage.xml
 coverage.*.xml
+tests/ImageProcessing.Tests/coverage.xml
+tests/**/coverage.xml
+
+# Documentation / coverage
+docs/coverage/
 
 # Paket tool store
 .paket/.store

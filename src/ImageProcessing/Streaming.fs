@@ -31,7 +31,6 @@ let imgSaver outDir =
     )
 
 let imgProcessor filterApplicator (imgSaver: MailboxProcessor<_>) =
-
     let filter = filterApplicator
 
     MailboxProcessor.Start(fun inbox ->
@@ -69,8 +68,7 @@ let processAllFiles inDir outDir filterApplicators =
 
     for file in filesToProcess do
         //while (imgProcessors |> Array.minBy (fun p -> p.CurrentQueueLength)).CurrentQueueLength > 3 do ()
-        (imgProcessors
-         |> Array.minBy (fun p -> p.CurrentQueueLength))
+        (imgProcessors |> Array.minBy (fun p -> p.CurrentQueueLength))
             .Post(Img(loadAsImage file))
 
         cnt <- cnt + 1
