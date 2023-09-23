@@ -2,6 +2,8 @@ namespace ImageProcessing.Tests
 
 open Expecto
 open ImageProcessing
+open ImageProcessing.Image
+open FilterApplicator
 
 module ImageProcessingTests =
     open ImageProcessing.ImageProcessing

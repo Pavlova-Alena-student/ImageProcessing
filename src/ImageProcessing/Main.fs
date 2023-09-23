@@ -35,21 +35,39 @@ module AssemblyInfo =
         printfn "%s - %A - %s - %s" name.Name version releaseDate githash
 
 module Main =
+    type filter =
+        | GaussianBlurKernel
+        | EdgesKernel
+        | SharpenKernel
+        | EdgeDetectKernel
+        | EmbrossEffectKernel
+        | IdKernel
+
+    let getFilterKernel filter =
+        match filter with
+        | GaussianBlurKernel -> Kernel.gaussianBlurKernel
+        | EdgesKernel -> Kernel.edgesKernel
+        | SharpenKernel -> Kernel.sharpenKernel
+        | EdgeDetectKernel -> Kernel.edgeDetectKernel
+        | EmbrossEffectKernel -> Kernel.embrossEffectKernel
+        | IdKernel -> Kernel.idKernel
+
     open Argu
 
     type CLIArguments =
         | Info
         | Version
-        | FavoriteColor of string // Look in App.config
-        | Filter of string * string
+        | Filter of filter * string
+        | GPUFilter of filter * string
 
         interface IArgParserTemplate with
             member s.Usage =
                 match s with
-                | Info -> "More detailed information"
+                | Info -> "Get information about this application"
                 | Version -> "Version of application"
-                | FavoriteColor _ -> "Favorite color"
-                | Filter (a, b) -> "Apply filter %s{a} on images in folder %s{b}/input/"
+                | Filter (a, b) ->
+                    "Apply filter <filterName> on images in folder <folderName>/input/ and save result to folder <folderName>/out/"
+                | GPUFilter (a, b) -> "Same as previous, but process takes place on GPU"
 
     [<EntryPoint>]
     let main (argv: string array) =
@@ -65,31 +83,31 @@ module Main =
             | Some ((filterName, pathToExamples)) ->
                 let inputFolder = System.IO.Path.Combine(pathToExamples, "input")
                 let outputFolder = System.IO.Path.Combine(pathToExamples, "out")
-                //let nvidiaDevice =
-                //    ClDevice.GetAvailableDevices(platform = Platform.Nvidia) |> Seq.head
-                //let intelDevice =
-                //    ClDevice.GetAvailableDevices(platform = Platform.Intel) |> Seq.head
-                (*let device = ClDevice.GetFirstAppropriateDevice()
-                printfn $"Device: %A{device.Name}"
-                let context = ClContext(device)
-                let applyFiltersOnAnyDevice = ImageProcessing.applyFiltersGPU context 64*)
-                //let nvContext = ClContext(nvidiaDevice)
-                //let applyFiltersOnNvGPU = ImageProcessing.applyFiltersGPU nvContext 64
-                //let intelContext = ClContext(intelDevice)
-                //let applyFiltersOnIntelGPU = ImageProcessing.applyFiltersGPU intelContext 64
-                let filters = [ Kernel.gaussianBlurKernel; Kernel.gaussianBlurKernel; Kernel.edgesKernel ]
-                //let blur = ImageProcessing.applyFilter ImageProcessing.gaussianBlurKernel grayscaleImage
-                //let edges = ImageProcessing.applyFilter ImageProcessing.edgesKernel blur
-                //let edges =  applyFiltersGPU [ImageProcessing.gaussianBlurKernel; ImageProcessing.edgesKernel] grayscaleImage
+                System.IO.Directory.CreateDirectory(outputFolder) |> ignore
+                let filters = [ getFilterKernel filterName ]
                 printfn $"Files from %s{inputFolder} will be processed"
                 let start = System.DateTime.Now
-
-                Streaming.processAllFiles inputFolder outputFolder [
-                    ImageProcessing.applyFilters
-                        filters (*applyFiltersOnAnyDevice filters (*; applyFiltersOnNvGPU filters; applyFiltersOnIntelGPU filters*)*)
-                ]
-
+                Streaming.processAllFiles inputFolder outputFolder [ FilterApplicator.applyFilters filters ]
                 printfn $"TotalTime = %f{(System.DateTime.Now - start).TotalMilliseconds}"
+            | None -> parser.PrintUsage() |> printfn "%s"
+        elif results.Contains GPUFilter then
+            match results.TryGetResult GPUFilter with
+            | Some ((filterName, pathToExamples)) ->
+                let inputFolder = System.IO.Path.Combine(pathToExamples, "input")
+                let outputFolder = System.IO.Path.Combine(pathToExamples, "out")
+                System.IO.Directory.CreateDirectory(outputFolder) |> ignore
+                let filters = [ getFilterKernel filterName ]
+                let allDevices = ClDevice.GetAvailableDevices()
+
+                for device in allDevices do
+                    let outputFolder = System.IO.Path.Combine(outputFolder, string device)
+                    System.IO.Directory.CreateDirectory(outputFolder) |> ignore
+                    let context = ClContext(device)
+                    let applyFiltersOnGPU = FilterApplicator.applyFiltersGPU context 64
+                    printfn $"Files from %s{inputFolder} will be processed by %A{device}"
+                    let start = System.DateTime.Now
+                    Streaming.processAllFiles inputFolder outputFolder [ applyFiltersOnGPU filters ]
+                    printfn $"TotalTime = %f{(System.DateTime.Now - start).TotalMilliseconds}"
             | None -> parser.PrintUsage() |> printfn "%s"
         else
             parser.PrintUsage() |> printfn "%s"

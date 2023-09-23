@@ -1,5 +1,6 @@
 module ImageProcessing.Streaming
 
+open ImageProcessing.Image
 open ImageProcessing.ImageProcessing
 
 let listAllFiles dir =
