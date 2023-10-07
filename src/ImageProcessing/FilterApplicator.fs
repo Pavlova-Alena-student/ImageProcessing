@@ -6,6 +6,23 @@ open SixLabors.ImageSharp
 open SixLabors.ImageSharp.PixelFormats
 open ImageProcessing.Image
 
+type Filter =
+    | GaussianBlur
+    | UpperEdge
+    | Sharpen
+    | AllEdges
+    | EmbrossEffect
+    | Id
+
+    member this.getKernel =
+        match this with
+        | GaussianBlur -> Kernel.gaussianBlurKernel
+        | UpperEdge -> Kernel.upperEdgeKernel
+        | Sharpen -> Kernel.sharpenKernel
+        | AllEdges -> Kernel.allEdgesKernel
+        | EmbrossEffect -> Kernel.embrossEffectKernel
+        | Id -> Kernel.idKernel
+
 let applyFilter (filter: float32[][]) imgW imgH (img: byte[]) =
     let filterD = (Array.length filter) / 2
     let filter = Array.concat filter
@@ -20,9 +37,13 @@ let applyFilter (filter: float32[][]) imgW imgH (img: byte[]) =
                         float32 img.[i * imgW + j]
         |]
 
-        Array.fold2 (fun s x y -> s + x * y) 0.0f filter dataToHandle
+        let sum = Array.fold2 (fun s x y -> s + x * y) 0.0f filter dataToHandle
 
-    Array.mapi (fun i _ -> byte (processPixel (i / imgW) (i % imgW))) img
+        if sum > float32 Byte.MaxValue then Byte.MaxValue
+        elif sum < 0.f then 0uy
+        else byte sum
+
+    Array.mapi (fun i _ -> (processPixel (i / imgW) (i % imgW))) img
 
 let applyFilters (filters: list<float32[][]>) (img: Image) =
     Image(

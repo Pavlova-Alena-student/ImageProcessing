@@ -20,7 +20,7 @@
     <Compile Include="Kernel.fs" />
     <Compile Include="Image.fs" />
     <Compile Include="FilterApplicator.fs" />
-    <Compile Include="GlobalImageTransformations.fs" />
+    <Compile Include="RotationApplicator.fs" />
     <Compile Include="ImageProcessing.fs" />
     <Compile Include="Streaming.fs" />
     <Compile Include="Main.fs" />

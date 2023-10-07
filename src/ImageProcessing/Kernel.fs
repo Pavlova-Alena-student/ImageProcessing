@@ -1,4 +1,4 @@
-module Kernel
+module ImageProcessing.Kernel
 
 let gaussianBlurKernel =
     [|
@@ -10,7 +10,7 @@ let gaussianBlurKernel =
     |]
     |> Array.map (Array.map (fun x -> (float32 x) / 256.0f))
 
-let edgesKernel =
+let upperEdgeKernel =
     [|
         [| 0; 0; -1; 0; 0 |]
         [| 0; 0; -1; 0; 0 |]
@@ -24,7 +24,7 @@ let sharpenKernel =
     [| [| 0; -1; 0 |]; [| -1; 5; -1 |]; [| 0; -1; 0 |] |]
     |> Array.map (Array.map float32)
 
-let edgeDetectKernel =
+let allEdgesKernel =
     [| [| 0; 1; 0 |]; [| 1; -4; 1 |]; [| 0; 1; 0 |] |]
     |> Array.map (Array.map float32)
 

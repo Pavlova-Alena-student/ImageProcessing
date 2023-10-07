@@ -6,4 +6,4 @@ open SixLabors.ImageSharp
 open SixLabors.ImageSharp.PixelFormats
 open ImageProcessing.Image
 open ImageProcessing.FilterApplicator
-open ImageProcessing.GlobalImageTransformation
+open ImageProcessing.RotationApplicator

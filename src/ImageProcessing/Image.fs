@@ -27,8 +27,5 @@ let loadAsImage (file: string) =
     Image(buf, img.Width, img.Height, System.IO.Path.GetFileName file)
 
 let saveImage (image: Image) file =
-    printfn "saving img pix with data = %A, width = %d, height = %d" image.Data image.Width image.Height
     let img = Image.LoadPixelData<L8>(image.Data, image.Width, image.Height)
-    printfn "saving img = %A to file %s" img file
     img.Save file
-    printfn "saved"

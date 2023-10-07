@@ -35,30 +35,14 @@ module AssemblyInfo =
         printfn "%s - %A - %s - %s" name.Name version releaseDate githash
 
 module Main =
-    type filter =
-        | GaussianBlurKernel
-        | EdgesKernel
-        | SharpenKernel
-        | EdgeDetectKernel
-        | EmbrossEffectKernel
-        | IdKernel
-
-    let getFilterKernel filter =
-        match filter with
-        | GaussianBlurKernel -> Kernel.gaussianBlurKernel
-        | EdgesKernel -> Kernel.edgesKernel
-        | SharpenKernel -> Kernel.sharpenKernel
-        | EdgeDetectKernel -> Kernel.edgeDetectKernel
-        | EmbrossEffectKernel -> Kernel.embrossEffectKernel
-        | IdKernel -> Kernel.idKernel
-
     open Argu
 
     type CLIArguments =
         | Info
         | Version
-        | Filter of filter * string
-        | GPUFilter of filter * string
+        | Filter of FilterApplicator.Filter * string
+        | GPUFilter of FilterApplicator.Filter * string
+        | Rotation of RotationApplicator.Rotation * string
 
         interface IArgParserTemplate with
             member s.Usage =
@@ -68,6 +52,8 @@ module Main =
                 | Filter (a, b) ->
                     "Apply filter <filterName> on images in folder <folderName>/input/ and save result to folder <folderName>/out/"
                 | GPUFilter (a, b) -> "Same as previous, but process takes place on GPU"
+                | Rotation (a, b) ->
+                    "Apply rotation/flip/reflection on images in folder <folderName>/input/ and save result to folder <folderName>/out/"
 
     [<EntryPoint>]
     let main (argv: string array) =
@@ -84,7 +70,7 @@ module Main =
                 let inputFolder = System.IO.Path.Combine(pathToExamples, "input")
                 let outputFolder = System.IO.Path.Combine(pathToExamples, "out")
                 System.IO.Directory.CreateDirectory(outputFolder) |> ignore
-                let filters = [ getFilterKernel filterName ]
+                let filters = [ filterName.getKernel ]
                 printfn $"Files from %s{inputFolder} will be processed"
                 let start = System.DateTime.Now
                 Streaming.processAllFiles inputFolder outputFolder [ FilterApplicator.applyFilters filters ]
@@ -96,7 +82,7 @@ module Main =
                 let inputFolder = System.IO.Path.Combine(pathToExamples, "input")
                 let outputFolder = System.IO.Path.Combine(pathToExamples, "out")
                 System.IO.Directory.CreateDirectory(outputFolder) |> ignore
-                let filters = [ getFilterKernel filterName ]
+                let filters = [ filterName.getKernel ]
                 let allDevices = ClDevice.GetAvailableDevices()
 
                 for device in allDevices do
@@ -108,6 +94,18 @@ module Main =
                     let start = System.DateTime.Now
                     Streaming.processAllFiles inputFolder outputFolder [ applyFiltersOnGPU filters ]
                     printfn $"TotalTime = %f{(System.DateTime.Now - start).TotalMilliseconds}"
+            | None -> parser.PrintUsage() |> printfn "%s"
+        elif results.Contains Rotation then
+            match results.TryGetResult Rotation with
+            | Some ((rotationName, pathToExamples)) ->
+                let inputFolder = System.IO.Path.Combine(pathToExamples, "input")
+                let outputFolder = System.IO.Path.Combine(pathToExamples, "out")
+                System.IO.Directory.CreateDirectory(outputFolder) |> ignore
+                let rotations = [ rotationName ]
+                printfn $"Files from %s{inputFolder} will be processed"
+                let start = System.DateTime.Now
+                Streaming.processAllFiles inputFolder outputFolder [ RotationApplicator.applyRotations rotations ]
+                printfn $"TotalTime = %f{(System.DateTime.Now - start).TotalMilliseconds}"
             | None -> parser.PrintUsage() |> printfn "%s"
         else
             parser.PrintUsage() |> printfn "%s"
