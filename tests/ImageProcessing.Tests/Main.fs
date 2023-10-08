@@ -1,7 +1,6 @@
 namespace ImageProcessing.Tests
 
 module ExpectoTemplate =
-
     open Expecto
 
     [<EntryPoint>]
