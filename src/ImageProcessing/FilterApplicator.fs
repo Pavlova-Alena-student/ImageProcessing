@@ -23,7 +23,7 @@ type Filter =
         | EmbrossEffect -> Kernel.embrossEffectKernel
         | Id -> Kernel.idKernel
 
-let applyFilter (filter: float32[][]) imgW imgH (img: byte[]) =
+let applyFilterOnByteArray (filter: float32[][]) imgW imgH (img: byte[]) =
     let filterD = (Array.length filter) / 2
     let filter = Array.concat filter
 
@@ -37,21 +37,16 @@ let applyFilter (filter: float32[][]) imgW imgH (img: byte[]) =
                         float32 img.[i * imgW + j]
         |]
 
-        let sum = Array.fold2 (fun s x y -> s + x * y) 0.0f filter dataToHandle
+        let result = Array.fold2 (fun s x y -> s + x * y) 0.0f filter dataToHandle
 
-        if sum > float32 Byte.MaxValue then Byte.MaxValue
-        elif sum < 0.f then 0uy
-        else byte sum
+        if result > float32 Byte.MaxValue then Byte.MaxValue
+        elif result < 0.f then 0uy
+        else byte result
 
     Array.mapi (fun i _ -> (processPixel (i / imgW) (i % imgW))) img
 
-let applyFilters (filters: list<float32[][]>) (img: Image) =
-    Image(
-        List.fold (fun data filter -> applyFilter filter img.Width img.Height data) img.Data filters,
-        img.Width,
-        img.Height,
-        img.Name
-    )
+let applyFilter (filter: Filter) (img: Image) =
+    Image(applyFilterOnByteArray filter.getKernel img.Width img.Height img.Data, img.Width, img.Height, img.Name)
 
 let applyFilterGPUKernel (clContext: ClContext) localWorkSize =
     let kernel =

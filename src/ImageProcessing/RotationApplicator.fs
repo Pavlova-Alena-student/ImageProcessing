@@ -26,7 +26,7 @@ type Rotation =
         | ReflectVertically -> SizeSavingRotation
 
 ///  imgH & imgW is new image's height & width
-let applyRotation rotation imgW imgH (img: byte[]) =
+let applyRotationOnByteArray rotation imgW imgH (img: byte[]) =
     let rotatePixel i j =
         let oldI, oldJ =
             match rotation with
@@ -40,20 +40,15 @@ let applyRotation rotation imgW imgH (img: byte[]) =
         | SizeSavingRotation -> img.[oldI * imgW + oldJ]
         | SizeChangingRotation -> img.[oldI * imgH + oldJ]
 
-    Array.mapi (fun i _ -> byte (rotatePixel (i / imgW) (i % imgW))) img
+    Array.mapi (fun i _ -> rotatePixel (i / imgW) (i % imgW)) img
 
-let applyRotations (rotations: Rotation list) (img: Image) =
+let applyRotation (rotation: Rotation) (img: Image) =
     let data, width, height =
-        List.fold
-            (fun (data, w, h) (rotation: Rotation) ->
-                if rotation.getType = SizeSavingRotation then
-                    let rotated = applyRotation rotation w h data
-                    (rotated, w, h)
-                else
-                    let rotated = applyRotation rotation h w data
-                    (rotated, h, w)
-            )
-            (img.Data, img.Width, img.Height)
-            rotations
+        if rotation.getType = SizeSavingRotation then
+            let rotated = applyRotationOnByteArray rotation img.Width img.Height img.Data
+            (rotated, img.Width, img.Height)
+        else
+            let rotated = applyRotationOnByteArray rotation img.Height img.Width img.Data
+            (rotated, img.Height, img.Width)
 
     Image(data, width, height, img.Name)

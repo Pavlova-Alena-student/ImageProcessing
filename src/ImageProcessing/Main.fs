@@ -70,10 +70,9 @@ module Main =
                 let inputFolder = System.IO.Path.Combine(pathToExamples, "input")
                 let outputFolder = System.IO.Path.Combine(pathToExamples, "out")
                 System.IO.Directory.CreateDirectory(outputFolder) |> ignore
-                let filters = [ filterName.getKernel ]
                 printfn $"Files from %s{inputFolder} will be processed"
                 let start = System.DateTime.Now
-                Streaming.processAllFiles inputFolder outputFolder [ FilterApplicator.applyFilters filters ]
+                Streaming.processAllFiles inputFolder outputFolder [ FilterApplicator.applyFilter filterName ]
                 printfn $"TotalTime = %f{(System.DateTime.Now - start).TotalMilliseconds}"
             | None -> parser.PrintUsage() |> printfn "%s"
         elif results.Contains GPUFilter then
@@ -101,10 +100,9 @@ module Main =
                 let inputFolder = System.IO.Path.Combine(pathToExamples, "input")
                 let outputFolder = System.IO.Path.Combine(pathToExamples, "out")
                 System.IO.Directory.CreateDirectory(outputFolder) |> ignore
-                let rotations = [ rotationName ]
                 printfn $"Files from %s{inputFolder} will be processed"
                 let start = System.DateTime.Now
-                Streaming.processAllFiles inputFolder outputFolder [ RotationApplicator.applyRotations rotations ]
+                Streaming.processAllFiles inputFolder outputFolder [ RotationApplicator.applyRotation rotationName ]
                 printfn $"TotalTime = %f{(System.DateTime.Now - start).TotalMilliseconds}"
             | None -> parser.PrintUsage() |> printfn "%s"
         else
